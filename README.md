@@ -1,12 +1,17 @@
-# Bidoraq
-
-![Build](https://img.shields.io/badge/build-passing-0F6F5C?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-7%20passed-0F6F5C?style=flat-square)
-![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square)
-![Stack](https://img.shields.io/badge/stack-React%20%2B%20Vite-646CFF?style=flat-square)
-![Network](https://img.shields.io/badge/network-X%20Layer%20196-1F2937?style=flat-square)
-![License](https://img.shields.io/badge/license-MIT-0F6F5C?style=flat-square)
-![Open source](https://img.shields.io/badge/open%20source-yes-0F6F5C?style=flat-square)
+<div align="center">
+  <img src="public/favicon.svg" alt="Bidoraq" width="72" height="72" />
+  <h1>Bidoraq</h1>
+  <p><strong>Verifiable procurement for real businesses.</strong></p>
+  <p>
+    <img src="https://img.shields.io/badge/build-passing-0F6F5C?style=flat-square" alt="Build" />
+    <img src="https://img.shields.io/badge/tests-7%20passed-0F6F5C?style=flat-square" alt="Tests" />
+    <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/stack-React%20%2B%20Vite-646CFF?style=flat-square" alt="Stack" />
+    <img src="https://img.shields.io/badge/network-X%20Layer%20196-1F2937?style=flat-square" alt="Network" />
+    <img src="https://img.shields.io/badge/license-MIT-0F6F5C?style=flat-square" alt="License" />
+    <img src="https://img.shields.io/badge/open%20source-yes-0F6F5C?style=flat-square" alt="Open source" />
+  </p>
+</div>
 
 Bidoraq is a local-first procurement evidence workspace for producing defensible tender outcomes. It locks the award rule before bids arrive, seals quotations as commitments, reveals and verifies those quotations later, records eligibility decisions, and publishes a redacted receipt that can be checked independently.
 
