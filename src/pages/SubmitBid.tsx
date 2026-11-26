@@ -201,7 +201,7 @@ export function SubmitBid() {
               <DataRow label="Sealed price" value={myBid.status === 'revealed' ? formatMoney(myBid.priceKobo) : 'Hidden until reveal'} />
               <DataRow label="Document" value={<Mono>{shortHash(myBid.documentHash, 10, 6)}</Mono>} />
               <DataRow label="Commitment" value={<Mono>{shortHash(myBid.commitment, 12, 8)}</Mono>} />
-              <DataRow label="Transaction" value={<Mono>{shortHash(myBid.transactionHash, 10, 6)}</Mono>} />
+              <DataRow label="Local reference" value={<Mono>{shortHash(myBid.localReference, 10, 6)}</Mono>} />
             </div>
 
             {myBid.status !== 'revealed' ? (
