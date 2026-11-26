@@ -15,6 +15,7 @@ import {
   X,
 } from 'lucide-react'
 import { Brand } from '../components/Brand'
+import { ChainStatus } from '../components/ChainStatus'
 import { Badge, Button, Mono } from '../components/ui'
 import { useApp } from '../state/store'
 import { formatMoney, shortHash } from '../lib/format'
@@ -62,6 +63,7 @@ export function Landing() {
             <a href="#method" className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted hover:text-ink">Method</a>
             <a href="#scenarios" className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted hover:text-ink">Guards</a>
             <Link to="/verify" className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted hover:text-ink">Verify</Link>
+            <Link to="/pricing" className="font-mono text-[10px] uppercase tracking-[0.16em] text-muted hover:text-ink">Pricing</Link>
           </nav>
           <div className="flex items-center gap-2">
             <Link to="/verify"><Button size="sm" variant="ghost" className="hidden sm:inline-flex">Inspect receipt</Button></Link>
@@ -243,7 +245,7 @@ export function Landing() {
                   ['Price', award && awardBid ? formatMoney(award.priceKobo) : '—'],
                   ['Policy hash', award ? shortHash(award.policyHash, 12, 8) : '—'],
                   ['Commitment', award ? shortHash(award.commitment, 12, 8) : '—'],
-                  ['Award transaction', award ? shortHash(award.transactionHash, 12, 8) : '—'],
+                  ['Award local reference', award ? shortHash(award.localReference, 12, 8) : '—'],
                 ].map(([label, value]) => (
                   <div key={label} className="flex items-center justify-between gap-4 bg-surface px-5 py-3">
                     <span className="text-xs uppercase tracking-[0.1em] text-muted">{label}</span>
@@ -261,6 +263,12 @@ export function Landing() {
                 Try the verifier <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
+          </div>
+        </section>
+
+        <section className="border-b border-line bg-surface">
+          <div className="mx-auto max-w-shell px-4 py-14 sm:px-6 lg:px-8 lg:py-20">
+            <ChainStatus />
           </div>
         </section>
 
