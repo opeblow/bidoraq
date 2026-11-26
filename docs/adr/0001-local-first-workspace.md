@@ -8,7 +8,7 @@ Bidoraq needs to demonstrate a complete procurement evidence workflow without de
 
 ## Decision
 
-The workspace is stored in browser `localStorage` under `bidoraq:workspace:v2`. All records are created through interface actions. Uploaded document bytes are hashed locally and are not persisted. Exports are explicit user actions.
+The workspace is stored in browser `localStorage` under `bidoraq:workspace:v3`. Version 2 records migrate on load. All records are created through interface actions. Uploaded document bytes are hashed locally and are not persisted. Exports are explicit user actions.
 
 ## Consequences
 
