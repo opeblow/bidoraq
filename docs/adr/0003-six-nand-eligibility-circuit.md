@@ -16,7 +16,7 @@ Positive:
 
 - The decision path is visible and testable.
 - All sixteen input vectors can be verified in tests.
-- The processor identity and circuit identifier are recorded.
+- A local circuit identifier is recorded, and a real processor identifier is recorded only after tape-out configuration.
 - Missing review cannot silently produce eligibility.
 
 Negative:
@@ -24,3 +24,4 @@ Negative:
 - The circuit intentionally simplifies real procurement compliance.
 - Reviewers still control the truthfulness of input bits.
 - More complex policies require a new circuit version.
+- Until a real Bidoraq tape-out exists, the result is explicitly a local simulation and must not be described as on-chain verified.
