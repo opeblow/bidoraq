@@ -4,7 +4,7 @@
   <p><strong>Verifiable procurement for real businesses.</strong></p>
   <p>
     <img src="https://img.shields.io/badge/build-passing-0F6F5C?style=flat-square" alt="Build" />
-    <img src="https://img.shields.io/badge/tests-7%20passed-0F6F5C?style=flat-square" alt="Tests" />
+    <img src="https://img.shields.io/badge/tests-11%20passed-0F6F5C?style=flat-square" alt="Tests" />
     <img src="https://img.shields.io/badge/TypeScript-strict-3178C6?style=flat-square" alt="TypeScript" />
     <img src="https://img.shields.io/badge/stack-React%20%2B%20Vite-646CFF?style=flat-square" alt="Stack" />
     <img src="https://img.shields.io/badge/network-X%20Layer%20196-1F2937?style=flat-square" alt="Network" />
@@ -17,8 +17,21 @@ Bidoraq is a local-first procurement evidence workspace for producing defensible
 
 The application starts empty. Tenders, bids, attestations, awards, audit entries, and receipts are created through the interface by the people acting in each role. No tenders, suppliers, prices, or receipts are embedded in the source.
 
+## X Layer TapeOut Accelerate entry
+
+Bidoraq is entered for the X Layer TapeOut Accelerate hackathon. The build reports three states honestly:
+
+| Tier | Meaning | Current status |
+| --- | --- | --- |
+| A | Eligibility recomputed by a real taped-out Bidoraq processor on X Layer | BLOCKED — requires a user-controlled wallet, OKB, and a signed tape-out action on `tapeout.net`. |
+| B | On-chain proof available but not yet produced | Not used. |
+| C | Live X Layer chain facts only: chain ID, block, RPC, and public processor bytecode | Available in the app. This is not an eligibility proof. |
+
+The six-NAND eligibility trace in this repository is a local simulation until a real Bidoraq circuit ID and processor address are configured with `VITE_TAPEOUT_CIRCUIT_ID` and `VITE_TAPEOUT_PROCESSOR`. A public reference processor exists on X Layer at `0xA93E807fAB41431827EBBa57443Fb687a95E2AA3`; it is displayed as a reference only and is not Bidoraq's circuit. See [SUBMISSION.md](SUBMISSION.md) for the hackathon mapping.
+
 ## Table of Contents
 
+- [X Layer TapeOut Accelerate entry](#x-layer-tapeout-accelerate-entry)
 - [Documentation](#documentation)
 - [Why Bidoraq exists](#why-bidoraq-exists)
 - [The problem we are tackling](#the-problem-we-are-tackling)
@@ -34,6 +47,7 @@ The application starts empty. Tenders, bids, attestations, awards, audit entries
   - [Award rule](#award-rule)
   - [Receipt verification](#receipt-verification)
 - [Feature map](#feature-map)
+- [Commercial model](#commercial-model)
 - [Getting started](#getting-started)
   - [HTTP smoke check](#http-smoke-check)
 - [Quality gates](#quality-gates)
@@ -57,7 +71,8 @@ The application starts empty. Tenders, bids, attestations, awards, audit entries
 | --- | --- |
 | [README](README.md) | Product overview, workflow, evidence model, application tour, and quick start. |
 | [Architecture](docs/ARCHITECTURE.md) | Runtime boundaries, components, data model, domain contracts, invariants, and testing strategy. |
-| [Architecture decision records](docs/adr/README.md) | Why the workspace is local-first, why commitments exist, why eligibility uses NAND gates, and why receipts are redacted. |
+| [Architecture decision records](docs/adr/README.md) | Why the workspace is local-first, why commitments exist, why eligibility uses NAND gates, why receipts are redacted, and why on-chain status is reported honestly. |
+| [Submission](SUBMISSION.md) | Hackathon form answers, judging criteria mapping, and deployment evidence. |
 | [Roadmap](ROADMAP.md) | Current focus, next priorities, later ideas, and explicit non-goals. |
 | [Changelog](CHANGELOG.md) | Notable changes by release. |
 | [Contributing](CONTRIBUTING.md) | Development setup, workflow, and pull request checklist. |
@@ -213,7 +228,7 @@ The policy hash is computed with Keccak-256 over ABI-encoded fields:
 
 ```text
 chain id
-verifier contract
+bytes32 domain tag
 bytes32 tender id
 currency
 commit deadline
@@ -231,7 +246,7 @@ A supplier commitment is computed with Keccak-256 over:
 
 ```text
 chain id
-verifier contract
+bytes32 domain tag
 bytes32 tender id
 bidder address
 price in kobo
@@ -278,13 +293,14 @@ The award rule is `lowest-eligible-v1`:
 
 ### Receipt verification
 
-The redacted receipt contains the policy, policy hash, winning bid reference, award price, local transaction reference, approver address, approval time, compliance note, and ranked revealed bids with commitments, prices, document hashes, salts, eligibility outcomes, and bidder addresses.
+The redacted receipt contains the policy, policy hash, winning bid reference, award price, local reference, approver address, approval time, compliance note, and ranked revealed bids with commitments, prices, document hashes, salts, eligibility outcomes, and bidder addresses. Version 2 receipts may also carry an on-chain eligibility verdict from a real taped-out processor.
 
 It omits supplier display names and uploaded document contents. The verifier recomputes:
 
 - Policy hash from the receipt fields.
 - Winning commitment from the revealed price, document hash, and salt.
 - Award rule from the ranked eligible bids and the locked tie rule.
+- On-chain eligibility separately, reporting `verified`, `mismatch`, `unavailable`, or `not-taped-out` without assuming a result.
 
 ## Feature map
 
@@ -296,10 +312,14 @@ It omits supplier display names and uploaded document contents. The verifier rec
 | Review | Per-bid evidence bits, provenance labels, six-NAND trace, eligibility result. |
 | Award | Computed ranking, compliance gate, refusal path, approver address, finalization record. |
 | Audit | Local ledger of writes, actor and role labels, record references, exportable JSON. |
-| Verification | Receipt paste or upload, load latest receipt, three integrity checks. |
+| Verification | Receipt paste or upload, load latest receipt, three local integrity checks plus honest on-chain status. |
 | Controls | Settings, identity, wallet, ledger export, receipt export, workspace clear. |
 | Interface | Responsive layout, density, tabular records, no overflow, no uncaught browser errors. |
 | Automation | Domain tests, typecheck, production build, Playwright screenshot and smoke flow, CodeQL, Dependabot. |
+
+## Commercial model
+
+The intended model is per completed, receipt-backed tender, with a free pilot, a team plan, and an enterprise plan for dedicated circuits and private deployment. The `/pricing` page presents these tiers as illustrative and states clearly that this build does not collect payments. Bidoraq never holds funds or escrows documents.
 
 ## Getting started
 
@@ -359,12 +379,12 @@ All routes should return `200`. Client-side interactions are verified by the Pla
 
 Current verification status:
 
-- 7 domain tests passed.
+- 11 domain tests passed.
 - Typecheck clean.
 - Markdown link and anchor validation clean.
 - Production build clean.
 - `npm ci --dry-run --ignore-scripts` clean.
-- 17 screenshots captured without horizontal overflow or browser errors.
+- 18 screenshots captured without horizontal overflow or browser errors.
 - All SPA route and built asset curl checks returned `200`.
 
 ## Application tour
@@ -377,6 +397,7 @@ Current verification status:
 | Onboarding role | ![Onboarding role](docs/screenshots/02-onboarding-role.png) | Role selection with the authority attached to each perspective. |
 | Onboarding profile | ![Onboarding profile](docs/screenshots/03-onboarding-profile.png) | Wallet address and operator profile capture before entering the workspace. |
 | Landing on mobile | ![Landing mobile](docs/screenshots/17-landing-mobile.png) | Responsive public page at 390 px width. |
+| Pricing | ![Pricing](docs/screenshots/18-pricing.png) | Illustrative commercial tiers with no payment collection in this build. |
 
 ### Workspace and tender publishing
 
@@ -424,7 +445,7 @@ flowchart LR
     ROUTER["React Router and AppShell"]
     PAGES["Workflow pages"]
     STORE["Workspace store"]
-    LS[("localStorage<br/>key: bidoraq:workspace:v2")]
+    LS[("localStorage<br/>key: bidoraq:workspace:v3")]
 
     subgraph DOMAIN["Domain services"]
       CRYPTO["crypto.ts<br/>policy and commitment hashes"]
@@ -543,14 +564,17 @@ bidoraq/
 │       ├── 14-receipt-verifier.png
 │       ├── 15-settings.png
 │       ├── 16-overview-final.png
-│       └── 17-landing-mobile.png
+│       ├── 17-landing-mobile.png
+│       └── 18-pricing.png
 ├── scripts/
 │   └── capture-screenshots.mjs
 ├── src/
 │   ├── components/
 │   │   ├── AppShell.tsx
 │   │   ├── Brand.tsx
+│   │   ├── ChainStatus.tsx
 │   │   ├── Domain.tsx
+│   │   ├── ErrorBoundary.tsx
 │   │   └── ui.tsx
 │   ├── lib/
 │   │   ├── award.ts
@@ -561,7 +585,8 @@ bidoraq/
 │   │   ├── format.ts
 │   │   ├── receipt.ts
 │   │   ├── stateMachine.ts
-│   │   └── workspace.ts
+│   │   ├── workspace.ts
+│   │   └── xlayer.ts
 │   ├── pages/
 │   │   ├── Award.tsx
 │   │   ├── CreateTender.tsx
@@ -569,6 +594,7 @@ bidoraq/
 │   │   ├── Landing.tsx
 │   │   ├── NotFound.tsx
 │   │   ├── Onboarding.tsx
+│   │   ├── Pricing.tsx
 │   │   ├── ReviewQueue.tsx
 │   │   ├── Settings.tsx
 │   │   ├── SubmitBid.tsx
@@ -582,12 +608,14 @@ bidoraq/
 │   ├── index.css
 │   ├── main.tsx
 │   └── types.ts
+├── .env.example
 ├── CODE_OF_CONDUCT.md
 ├── CONTRIBUTING.md
 ├── LICENSE
 ├── PRIVACY.md
 ├── README.md
 ├── SECURITY.md
+├── SUBMISSION.md
 ├── index.html
 ├── package-lock.json
 ├── package.json
@@ -622,7 +650,7 @@ The interface is organized around evidence density:
 
 ## Data lifecycle and privacy
 
-Workspace records are persisted in the browser under `bidoraq:workspace:v2`. The workspace can be exported or cleared from Settings. Uploaded document bytes are hashed locally and are not stored in the ledger. The published receipt omits supplier names and document contents while retaining the hashes and reveal values required for verification.
+Workspace records are persisted in the browser under `bidoraq:workspace:v3`. The workspace can be exported or cleared from Settings. Uploaded document bytes are hashed locally and are not stored in the ledger. The published receipt omits supplier names and document contents while retaining the hashes and reveal values required for verification.
 
 | Data class | Local workspace | Exported receipt | Notes |
 | --- | --- | --- | --- |
@@ -663,7 +691,8 @@ These boundaries are deliberate in version 0.1.0. They should be treated as arch
 | --- | --- | --- |
 | Local-only workspace | No shared state between users or devices. | Add a clearly bounded synchronization adapter later. |
 | Role switching is not authentication | Anyone with browser access can change the active role. | Add identity and authorization for hosted deployments. |
-| No on-chain anchoring | Receipts are independently recomputable but not timestamp-anchored externally. | Add optional anchoring or witness signatures. |
+| No on-chain anchoring for receipts | Receipts are independently recomputable but not timestamp-anchored externally. The app shows live chain facts only as Tier C. | Add optional anchoring or witness signatures after tape-out. |
+| No real Bidoraq circuit yet | Eligibility is a local six-NAND simulation unless a real circuit ID and processor are configured. | Complete a user-signed tape-out action, then configure `VITE_TAPEOUT_CIRCUIT_ID` and `VITE_TAPEOUT_PROCESSOR`. |
 | No document storage | Only hashes are retained, so original files must be preserved separately. | Keep external document custody with the operator. |
 | No storage migration automation | Changing the workspace schema requires an explicit release decision. | Add migration handling before schema changes ship. |
 | No accessibility audit | Layout overflow and browser errors are checked, but assistive technology coverage is not certified. | Add automated accessibility checks to CI. |
@@ -673,7 +702,7 @@ These boundaries are deliberate in version 0.1.0. They should be treated as arch
 
 ### Where is data stored?
 
-In the browser under `bidoraq:workspace:v2`. There is no server-side workspace.
+In the browser under `bidoraq:workspace:v3`. There is no server-side workspace.
 
 ### Why does the app start empty?
 
@@ -681,7 +710,7 @@ Because the product is built around real records. Seeded tenders and fabricated 
 
 ### Does Bidoraq submit transactions on-chain?
 
-No. It derives local hash references and computes evidence using hardcoded network and verifier constants. It does not broadcast or settle transactions.
+No. It derives local hash references and reads public X Layer chain facts through RPC. It does not broadcast, sign, or settle transactions. A real eligibility proof requires a configured taped-out processor.
 
 ### Can I use it without a wallet extension?
 
@@ -719,7 +748,8 @@ It is a strong local-first evidence prototype. Real deployment needs identity, a
 | Award rule | The locked method for selecting the lowest eligible quotation and resolving ties. |
 | Receipt | A redacted JSON artifact containing the evidence needed to verify an award. |
 | Audit ledger | A local list of writes with actor, role, record, timestamp, and reference. |
-| Transaction reference | A locally derived hash used to tie an audit entry to a record. |
+| Local reference | A deterministic local hash used to tie an audit entry to a record; not a blockchain transaction hash. |
+| Tier C | Honest live chain facts from public X Layer RPCs, explicitly not an eligibility proof. |
 | Evidence Ledger | The visual design system built around dense, tabular, restrained evidence display. |
 
 ## Open source
