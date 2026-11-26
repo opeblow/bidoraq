@@ -11,8 +11,9 @@ import {
 import { isAddress } from 'viem'
 import { selectWinner } from '../lib/award'
 import { evaluateEligibility } from '../lib/circuit'
-import { computeCommitment, computePolicyHash, transactionHash, verifyCommitment } from '../lib/crypto'
-import { createEmptyState, STORAGE_KEY, type AppState } from '../lib/workspace'
+import { evaluateEligibilityOnChain } from '../lib/xlayer'
+import { computeCommitment, computePolicyHash, referenceId, verifyCommitment } from '../lib/crypto'
+import { createEmptyState, LEGACY_STORAGE_KEY, migrateWorkspace, STORAGE_KEY, type AppState } from '../lib/workspace'
 import { assertTransition } from '../lib/stateMachine'
 import type {
   AuditLog,
@@ -52,10 +53,10 @@ type Action =
 
 function loadState(): AppState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY)
+    const raw = localStorage.getItem(STORAGE_KEY) ?? localStorage.getItem(LEGACY_STORAGE_KEY)
     if (raw) {
-      const parsed = JSON.parse(raw) as AppState
-      if (parsed.version === 2) return { ...parsed, toasts: [] }
+      const migrated = migrateWorkspace(raw)
+      if (migrated) return migrated
     }
   } catch {
     return createEmptyState()
@@ -363,10 +364,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         commitment,
         committedAt: Date.now(),
         status: 'committed',
-        transactionHash: transactionHash(`commit-${tender.id}-${actor}`),
+        localReference: referenceId(`commit-${tender.id}-${actor}`),
       }
       dispatch({ type: 'ADD_BID', bid })
-      audit(actor, current.role, 'Bid committed', bid.id, bid.transactionHash)
+      audit(actor, current.role, 'Bid committed', bid.id, bid.localReference)
       toast('success', 'Commitment recorded', `${bid.id} · ${commitment.slice(0, 12)}…`)
       return { ok: true, bidId: bid.id }
     },
@@ -423,13 +424,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
         toast('error', 'Reviewer role required', 'Switch to the reviewer role before attesting evidence.')
         return false
       }
-      const eligibility = evaluateEligibility(inputs, Date.now())
+      const local = evaluateEligibility(inputs, Date.now())
+      const onChain = await evaluateEligibilityOnChain(local.bits, { expectedResult: local.result })
+      const eligibility = { ...local, onChain }
       dispatch({ type: 'UPDATE_BID', id: bidId, patch: { eligibility } })
       audit(actor, 'reviewer', 'Eligibility attested', bidId, eligibility.circuitId)
       toast(
         eligibility.result ? 'success' : 'info',
         eligibility.result ? 'Supplier marked eligible' : 'Supplier marked ineligible',
-        `Circuit ${eligibility.circuitId} returned ${eligibility.result ? '1' : '0'}.`,
+        `${eligibility.circuitId} returned ${eligibility.result ? '1' : '0'} locally; on-chain: ${onChain.status}.`,
       )
       return true
     },
@@ -462,14 +465,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         priceKobo: decision.winner.priceKobo,
         approvedBy: actor,
         approvedAt: Date.now(),
-        transactionHash: transactionHash(`award-${tenderId}`),
+        localReference: referenceId(`award-${tenderId}`),
         policyHash: tender.policyHash,
         commitment: decision.winner.commitment,
         complianceNote: decision.reason,
       }
       dispatch({ type: 'ADD_AWARD', award })
       dispatch({ type: 'SET_TENDER_STATUS', id: tenderId, status: 'awarded' })
-      audit(actor, 'approver', 'Award finalized', tenderId, award.transactionHash)
+      audit(actor, 'approver', 'Award finalized', tenderId, award.localReference)
       toast('success', 'Award recorded', `${decision.winner.supplierName} · ${decision.winner.id}`)
       return true
     },
