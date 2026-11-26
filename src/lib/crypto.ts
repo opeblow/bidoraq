@@ -8,9 +8,6 @@ import {
 import type { Policy } from '../types'
 
 export const CHAIN_ID = 196n
-export const VERIFYING_CONTRACT = '0x0000000000000000000000000000000000000bda' as Hex
-export const PROCESSOR_ADDRESS = '0x2f7b9c1a4e6d8b0f3a5c7e9d1b3f5a7c9e0d2b4f' as Hex
-export const CIRCUIT_ID = 'tap02-nand6-eligibility-v1'
 
 const ruleCodes: Record<Policy['ruleVersion'], number> = {
   'lowest-eligible-v1': 1,
@@ -24,14 +21,7 @@ export function hashText(value: string): Hex {
   return keccak256(stringToHex(value))
 }
 
-export function hashFile(buffer: ArrayBuffer): Hex {
-  const bytes = new Uint8Array(buffer)
-  let binary = ''
-  for (const byte of bytes) binary += String.fromCharCode(byte)
-  const encoded = btoa(binary)
-  const digest = atob(encoded)
-  return hashText(digest)
-}
+export const DOMAIN_TAG = hashText('bidoraq:domain:v3')
 
 export async function hashDocument(file: File): Promise<Hex> {
   const buffer = await file.arrayBuffer()
@@ -51,7 +41,7 @@ export function computePolicyHash(tenderId: string, policy: Policy): Hex {
     encodeAbiParameters(
       [
         { type: 'uint256' },
-        { type: 'address' },
+        { type: 'bytes32' },
         { type: 'bytes32' },
         { type: 'string' },
         { type: 'uint256' },
@@ -62,7 +52,7 @@ export function computePolicyHash(tenderId: string, policy: Policy): Hex {
       ],
       [
         CHAIN_ID,
-        VERIFYING_CONTRACT,
+        DOMAIN_TAG,
         tenderIdBytes(tenderId),
         policy.currency,
         BigInt(policy.commitDeadline),
@@ -86,7 +76,7 @@ export function computeCommitment(input: {
     encodeAbiParameters(
       [
         { type: 'uint256' },
-        { type: 'address' },
+        { type: 'bytes32' },
         { type: 'bytes32' },
         { type: 'address' },
         { type: 'uint256' },
@@ -95,7 +85,7 @@ export function computeCommitment(input: {
       ],
       [
         CHAIN_ID,
-        VERIFYING_CONTRACT,
+        DOMAIN_TAG,
         tenderIdBytes(input.tenderId),
         input.bidder as Hex,
         BigInt(input.priceKobo),
@@ -113,8 +103,8 @@ export function verifyCommitment(
   return computeCommitment(input).toLowerCase() === expected.toLowerCase()
 }
 
-export function transactionHash(seed: string): Hex {
-  return keccak256(stringToHex(`bidoraq:${seed}:${Date.now()}`))
+export function referenceId(seed: string): Hex {
+  return hashText(`bidoraq:local-reference:${seed}`)
 }
 
 export function isBytes32(value: string) {
