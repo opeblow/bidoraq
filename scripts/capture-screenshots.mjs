@@ -159,6 +159,9 @@ await shot('15-settings.png')
 await goto('/app')
 await shot('16-overview-final.png')
 
+await goto('/pricing')
+await shot('18-pricing.png')
+
 const mobile = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1 })
 const mobilePage = await mobile.newPage()
 await mobilePage.goto(BASE, { waitUntil: 'networkidle' })
