@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { isCompliantWinner, selectWinner } from './award'
 import { allCircuitVectors, evaluateEligibility } from './circuit'
-import { computeCommitment, computePolicyHash, hashText, verifyCommitment } from './crypto'
+import { computeCommitment, computePolicyHash, hashText, referenceId, verifyCommitment } from './crypto'
+import { verifyReceipt, type ReceiptPayload } from './receipt'
+import { migrateWorkspace } from './workspace'
 import { canTransition, nextStatus } from './stateMachine'
 import type { Bid, EligibilityInput, Policy } from '../types'
 
@@ -36,7 +38,7 @@ function bid(overrides: Partial<Bid>): Bid {
     committedAt: 500,
     revealedAt: 900,
     status: 'revealed',
-    transactionHash: hashText('tx'),
+    localReference: hashText('ref'),
     ...overrides,
   }
 }
@@ -110,6 +112,72 @@ describe('award rule', () => {
     ]
     expect(selectWinner(tied, policy).winner?.id).toBe('first')
     expect(selectWinner(tied, { ...policy, tieRule: 'supplier-id' }).winner?.id).toBe('second')
+  })
+})
+
+describe('receipt verification', () => {
+  const commitment = computeCommitment({ ...baseInput, priceKobo: '1000000' })
+  const receipt: ReceiptPayload = {
+    version: 2,
+    tenderId: baseInput.tenderId,
+    policy,
+    policyHash: computePolicyHash(baseInput.tenderId, policy),
+    winningBidId: 'BID-1',
+    priceKobo: '1000000',
+    localReference: hashText('ref'),
+    approvedBy: baseInput.bidder,
+    approvedAt: 1_000,
+    complianceNote: 'Lowest eligible quotation',
+    ranked: [
+      {
+        id: 'BID-1',
+        bidder: baseInput.bidder,
+        commitment,
+        priceKobo: '1000000',
+        documentHash: baseInput.documentHash,
+        salt: baseInput.salt,
+        committedAt: 500,
+        eligible: true,
+      },
+    ],
+  }
+
+  it('passes only with every revealed field supplied', () => {
+    const reveal = {
+      priceKobo: '1000000',
+      documentHash: baseInput.documentHash,
+      salt: baseInput.salt,
+    }
+    expect(verifyReceipt(receipt, reveal).every((check) => check.ok)).toBe(true)
+    expect(verifyReceipt(receipt, { ...reveal, salt: '' })[1].ok).toBe(false)
+  })
+
+  it('rejects a tampered policy hash', () => {
+    const checks = verifyReceipt({ ...receipt, policyHash: hashText('tampered') }, {
+      priceKobo: '1000000',
+      documentHash: baseInput.documentHash,
+      salt: baseInput.salt,
+    })
+    expect(checks[0].ok).toBe(false)
+  })
+})
+
+describe('workspace migration', () => {
+  it('renames legacy transaction hashes to deterministic local references', () => {
+    const migrated = migrateWorkspace(JSON.stringify({
+      version: 2,
+      bids: [{ id: 'BID-1', transactionHash: '0xabc' }],
+      awards: [{ id: 'AWARD-1', transactionHash: '0xdef' }],
+    }))
+    expect(migrated?.version).toBe(3)
+    expect(migrated?.bids[0].localReference).toBe('0xabc')
+    expect(migrated?.awards[0].localReference).toBe('0xdef')
+    expect(JSON.stringify(migrated)).not.toContain('transactionHash')
+  })
+
+  it('creates a stable local reference from a seed', () => {
+    expect(referenceId('commit-1')).toBe(referenceId('commit-1'))
+    expect(referenceId('commit-1')).not.toBe(referenceId('commit-2'))
   })
 })
 
