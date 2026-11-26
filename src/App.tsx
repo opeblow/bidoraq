@@ -2,6 +2,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom'
 import { AppProvider } from './state/store'
 import { AppShell } from './components/AppShell'
 import { Landing } from './pages/Landing'
+import { Pricing } from './pages/Pricing'
 import { Dashboard } from './pages/Dashboard'
 import { CreateTender } from './pages/CreateTender'
 import { TenderDetail } from './pages/TenderDetail'
@@ -19,6 +20,7 @@ export default function App() {
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/pricing" element={<Pricing />} />
           <Route element={<AppShell><Dashboard /></AppShell>} path="/app" />
           <Route element={<AppShell><CreateTender /></AppShell>} path="/app/tenders/new" />
           <Route element={<AppShell><TenderDetail /></AppShell>} path="/app/tenders/:id" />
