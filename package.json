@@ -24,6 +24,7 @@
     "viem": "^2.37.8"
   },
   "devDependencies": {
+    "@tailwindcss/postcss": "^4.3.5",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^6.3.0",
