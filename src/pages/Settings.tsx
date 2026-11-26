@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { CheckCircle2, Download, FileCheck2, Gavel, ScanSearch, Trash2, Wallet } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { PageHeader } from '../components/Domain'
+import { ChainStatus } from '../components/ChainStatus'
 import { Badge, Button, Card, DataRow, Field, Input, Select } from '../components/ui'
 import { useApp } from '../state/store'
 import { buildReceipt, downloadJson } from '../lib/receipt'
@@ -128,6 +129,7 @@ export function Settings() {
         </div>
 
         <aside className="space-y-5">
+          <ChainStatus />
           <Card className="p-6">
             <h2 className="text-lg font-semibold tracking-[-0.04em]">Ledger controls</h2>
             <div className="mt-5 border border-line bg-paper px-5 py-2">
