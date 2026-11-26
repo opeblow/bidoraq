@@ -1,4 +1,4 @@
-import { CIRCUIT_ID, PROCESSOR_ADDRESS } from './crypto'
+import { IS_TAPEOUT_READY, TAPEOUT_CIRCUIT_ID, TAPEOUT_PROCESSOR } from './xlayer'
 import type { CircuitTraceLine, EligibilityInput, EligibilityResult } from '../types'
 
 export const eligibilityLabels: Record<EligibilityInput['key'], string> = {
@@ -36,10 +36,14 @@ export function evaluateEligibility(inputs: EligibilityInput[], evaluatedAt = Da
     bits: [A, B, C, D],
     trace,
     result,
-    circuitId: CIRCUIT_ID,
-    processor: PROCESSOR_ADDRESS,
+    circuitId: IS_TAPEOUT_READY ? TAPEOUT_CIRCUIT_ID : 'local-six-nand-v1',
+    processor: IS_TAPEOUT_READY ? TAPEOUT_PROCESSOR : '',
     evaluatedAt,
   }
+}
+
+export function isLocalSimulation(result: EligibilityResult) {
+  return !result.processor
 }
 
 export function defaultEligibilityInputs(): EligibilityInput[] {
