@@ -110,7 +110,7 @@ export function TenderDetail() {
           {bids.length > 0 ? bids.map((bid) => (
             <BidCard key={bid.id} bid={bid}>
               <div className="flex flex-wrap items-center justify-between gap-3">
-                <div className="font-mono text-[10px] text-muted">tx {shortHash(bid.transactionHash, 10, 6)}</div>
+                <div className="font-mono text-[10px] text-muted">local ref {shortHash(bid.localReference, 10, 6)}</div>
                 {bid.status === 'committed' ? (
                   <Link to={`/app/tenders/${tender.id}/submit`} className="inline-flex items-center gap-1 font-mono text-[10px] uppercase tracking-[0.12em] text-ink hover:underline">
                     Reveal <ArrowRight className="h-3 w-3" />
