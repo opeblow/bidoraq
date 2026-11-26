@@ -1,0 +1,116 @@
+:root {
+  --ink: 11 36 38;
+  --teal: 16 43 49;
+  --paper: 245 243 236;
+  --surface: 255 255 255;
+  --mint: 101 229 189;
+  --mint-deep: 20 132 101;
+  --clay: 181 85 55;
+  --amber: 204 132 18;
+  --muted: 92 108 122;
+  --line: 207 211 202;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  background: rgb(var(--paper));
+  color: rgb(var(--ink));
+  font-family: Manrope, Aptos, 'Segoe UI', sans-serif;
+  font-feature-settings: 'ss01' on, 'cv11' on;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+::selection {
+  background: rgb(var(--mint) / 0.38);
+  color: rgb(var(--ink));
+}
+
+:focus-visible {
+  outline: 2px solid rgb(var(--mint-deep));
+  outline-offset: 3px;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+.grid-paper {
+  background-image:
+    linear-gradient(to right, rgb(var(--ink) / 0.045) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--ink) / 0.045) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.ledger-rule {
+  background-image: repeating-linear-gradient(
+    to right,
+    rgb(var(--line) / 0.9) 0,
+    rgb(var(--line) / 0.9) 1px,
+    transparent 1px,
+    transparent 8px
+  );
+}
+
+.scroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgb(var(--line)) transparent;
+}
+
+.scroll-thin::-webkit-scrollbar {
+  height: 8px;
+  width: 8px;
+}
+
+.scroll-thin::-webkit-scrollbar-thumb {
+  background: rgb(var(--line));
+  border-radius: 999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+  }
+}
