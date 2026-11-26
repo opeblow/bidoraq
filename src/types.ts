@@ -56,6 +56,16 @@ export interface CircuitTraceLine {
   output: boolean
 }
 
+export type OnChainVerdict = {
+  status: 'verified' | 'mismatch' | 'unavailable' | 'not-taped-out'
+  bits: [boolean, boolean, boolean, boolean]
+  result?: boolean
+  processor?: string
+  circuitId?: string
+  evaluatedAt: number
+  detail: string
+}
+
 export interface EligibilityResult {
   inputs: EligibilityInput[]
   bits: [boolean, boolean, boolean, boolean]
@@ -64,6 +74,7 @@ export interface EligibilityResult {
   circuitId: string
   processor: string
   evaluatedAt: number
+  onChain?: OnChainVerdict
 }
 
 export interface Bid {
@@ -80,7 +91,7 @@ export interface Bid {
   committedAt: number
   revealedAt?: number
   status: BidStatus
-  transactionHash: string
+  localReference: string
   eligibility?: EligibilityResult
   revealError?: string
 }
@@ -91,7 +102,7 @@ export interface Award {
   priceKobo: string
   approvedBy: string
   approvedAt: number
-  transactionHash: string
+  localReference: string
   policyHash: string
   commitment: string
   complianceNote: string
