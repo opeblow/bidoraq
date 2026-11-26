@@ -75,8 +75,8 @@ export function CreateTender() {
       setError('The commitment deadline must be in the future.')
       return false
     }
-    if (policy.revealDeadline <= policy.commitDeadline) {
-      setError('The reveal deadline must be after the commitment deadline.')
+    if (policy.revealDeadline < policy.commitDeadline) {
+      setError('The reveal deadline must be at or after the commitment deadline.')
       return false
     }
     if (documents.length === 0 || bidders.length === 0) {
