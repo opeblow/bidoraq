@@ -8,7 +8,7 @@ An audit artifact must prove the rule and outcome, but publishing full bid packa
 
 ## Decision
 
-Receipts include policy fields, hashes, wallet addresses, prices, salts, eligibility outcomes, ranked bid commitments, and award metadata. They omit supplier display names and document contents.
+Version 2 receipts include policy fields, hashes, wallet addresses, prices, salts, eligibility outcomes, ranked bid commitments, award metadata, a deterministic local reference, and an optional on-chain eligibility verdict. They omit supplier display names and document contents. Verification requires all revealed fields and reports on-chain status separately from the three local integrity checks.
 
 ## Consequences
 
@@ -24,3 +24,4 @@ Negative:
 - Wallet addresses and salts are still sensitive and must be shared carefully.
 - Receipts expose prices to anyone who receives them.
 - Schema changes require versioned parser support.
+- A local reference looks like a hash but is not a transaction hash and must be labeled accordingly.
