@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { FilePlus2, Gavel, ScanSearch, ShieldCheck } from 'lucide-react'
 import { PageHeader, StatusPill, TenderTable } from '../components/Domain'
+import { ChainStatus } from '../components/ChainStatus'
 import { Badge, Button, EmptyState, Stat, Tabs } from '../components/ui'
 import { useApp } from '../state/store'
 import { formatDate, shortHash } from '../lib/format'
@@ -48,6 +49,10 @@ export function Dashboard() {
         <div className="bg-surface p-5"><Stat label="Commitments" value={state.bids.length} note={`${state.bids.filter((bid) => bid.status === 'revealed').length} revealed`} /></div>
         <div className="bg-surface p-5"><Stat label="Exceptions" value={exceptions.length} tone="warning" note="ineligible or failed reveal" /></div>
         <div className="bg-surface p-5"><Stat label="Verified awards" value={state.awards.length} tone="verified" note="redacted receipts published" /></div>
+      </div>
+
+      <div className="mt-6">
+        <ChainStatus />
       </div>
 
       {focusTender ? (
