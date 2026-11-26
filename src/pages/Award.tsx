@@ -147,7 +147,7 @@ export function Award() {
                 <Gavel className="h-4 w-4" /> Finalize compliant award
               </Button>
             ) : (
-              <div className="mt-6 border-t border-paper/15 pt-4 font-mono text-[10px] text-paper/60">signed · {shortHash(winningAward.transactionHash, 12, 8)}</div>
+              <div className="mt-6 border-t border-paper/15 pt-4 font-mono text-[10px] text-paper/60">local ref · {shortHash(winningAward.localReference, 12, 8)}</div>
             )}
           </div>
 
