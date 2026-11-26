@@ -1,0 +1,81 @@
+name: Bug report
+description: Report incorrect behavior in the application, tests, or workflow
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: Thanks for reporting a bug. Redact wallet addresses and document contents before pasting records.
+  - type: input
+    id: version
+    attributes:
+      label: Version or commit
+      description: Provide the release version or commit hash.
+      placeholder: 0.1.0 or abc1234
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the incorrect behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: Describe the expected behavior.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: List the steps from an empty workspace where possible.
+      placeholder: |
+        1. Go to ...
+        2. Select role ...
+        3. Observe ...
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - Onboarding
+        - Tender publishing
+        - Supplier bid
+        - Review
+        - Award
+        - Receipt verification
+        - Settings
+        - Documentation
+        - Automation
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: browser
+    attributes:
+      label: Browser
+      placeholder: Chrome 131 on Windows 11
+    validations:
+      required: false
+  - type: input
+    id: node
+    attributes:
+      label: Node.js version
+      placeholder: v22.0.0
+    validations:
+      required: false
+  - type: textarea
+    id: logs
+    attributes:
+      label: Console output or screenshots
+      description: Paste text logs or attach screenshots after redacting sensitive information.
+      render: shell
+    validations:
+      required: false
