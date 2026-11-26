@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { verifyReceiptOnChain } from '../lib/xlayer'
 import { Link } from 'react-router-dom'
 import { ArrowRight, CheckCircle2, ClipboardPaste, Download, FileUp, Fingerprint, XCircle } from 'lucide-react'
 import { PageHeader } from '../components/Domain'
@@ -47,10 +48,13 @@ export function Verify() {
     setError('')
   }
 
-  const verify = () => {
+  const verify = async () => {
     try {
       const receipt = parseReceipt(receiptText)
-      setChecks(verifyReceipt(receipt, { priceKobo, documentHash, salt }))
+      const local = verifyReceipt(receipt, { priceKobo, documentHash, salt })
+      setChecks([...local, { label: 'On-chain eligibility', ok: false, detail: 'Checking X Layer...' }])
+      const onChain = await verifyReceiptOnChain(receipt)
+      setChecks([...local, onChain])
       setError('')
     } catch (caught) {
       setChecks([])
@@ -67,14 +71,15 @@ export function Verify() {
     }
   }
 
-  const allOk = checks.length === 3 && checks.every((check) => check.ok)
+  const localChecks = checks.filter((check) => check.label !== 'On-chain eligibility')
+  const allOk = localChecks.length === 3 && localChecks.every((check) => check.ok)
 
   return (
     <>
       <PageHeader
         eyebrow="Public / Receipt verifier"
         title="Verify without opening the bids"
-        detail="Load a published receipt, supply the revealed fields, and recompute the three checks that make the award defensible."
+        detail="Load a published receipt, supply the revealed fields, and recompute the three local checks plus the honest on-chain eligibility status."
         actions={<Link to="/app"><Button variant="secondary" size="sm">Back to workspace <ArrowRight className="h-3.5 w-3.5" /></Button></Link>}
       />
 
@@ -119,10 +124,10 @@ export function Verify() {
               {checks.length === 0 ? 'Verification output' : allOk ? 'receipt valid' : 'receipt invalid'}
             </div>
             <div className="mt-5 text-3xl font-semibold tracking-[-0.06em]">
-              {checks.length === 0 ? '—' : `${checks.filter((check) => check.ok).length} / 3`}
+              {checks.length === 0 ? '—' : `${localChecks.filter((check) => check.ok).length} / 3 local`}
             </div>
             <p className={`mt-2 text-sm leading-6 ${checks.length > 0 ? 'text-muted' : 'text-paper/65'}`}>
-              {checks.length === 0 ? 'Run the verifier to recompute policy, commitment and rule compliance.' : allOk ? 'All checks pass. The receipt can be published without exposing confidential bid contents.' : 'At least one check failed. Do not treat this receipt as evidence.'}
+              {checks.length === 0 ? 'Run the verifier to recompute policy, commitment and rule compliance.' : allOk ? 'All local checks pass. On-chain eligibility is reported separately and cannot be assumed.' : 'At least one local check failed. Do not treat this receipt as evidence.'}
             </p>
           </div>
 
@@ -150,7 +155,7 @@ export function Verify() {
                 <DataRow label="Rule" value={latestReceipt.policy.ruleVersion} />
                 <DataRow label="Price" value={formatMoney(latestReceipt.priceKobo)} />
                 <DataRow label="Commitment" value={<Mono>{shortHash(winningBid?.commitment ?? latestReceipt.ranked.find((bid) => bid.id === latestReceipt.winningBidId)?.commitment ?? '', 10, 6)}</Mono>} />
-                <DataRow label="Transaction" value={<Mono>{shortHash(latestReceipt.transactionHash, 10, 6)}</Mono>} />
+                <DataRow label="Local reference" value={<Mono>{shortHash(latestReceipt.localReference, 10, 6)}</Mono>} />
               </div>
             </div>
           ) : (
