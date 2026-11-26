@@ -3,6 +3,7 @@ import { ArrowUpRight, Check, CircleDot, FileSearch, LockKeyhole, X } from 'luci
 import { Badge, DataRow, Mono } from './ui'
 import { useApp } from '../state/store'
 import { cx } from '../lib/cx'
+import { isLocalSimulation } from '../lib/circuit'
 import { formatCountdown, formatDate, formatMoney, shortHash } from '../lib/format'
 import type { Award, Bid, EligibilityResult, Tender, TenderStatus } from '../types'
 
@@ -142,6 +143,8 @@ export function BidCard({ bid, children }: { bid: Bid; children?: React.ReactNod
 }
 
 export function EligibilityTrace({ result }: { result: EligibilityResult }) {
+  const local = isLocalSimulation(result)
+  const onChain = result.onChain?.status ?? 'not-taped-out'
   return (
     <div className="border border-line bg-paper/60">
       <div className="flex items-center justify-between border-b border-line px-4 py-3">
@@ -164,7 +167,7 @@ export function EligibilityTrace({ result }: { result: EligibilityResult }) {
         ))}
       </div>
       <div className="border-t border-line px-4 py-3 font-mono text-[10px] text-muted">
-        {result.circuitId} · processor {shortHash(result.processor, 8, 4)}
+        {local ? `${result.circuitId} · Circuit not yet taped out — local simulation` : `${result.circuitId} · on-chain ${onChain}`}
       </div>
     </div>
   )
@@ -197,7 +200,7 @@ export function ReceiptCard({ tender, bid, award, compact = false }: { tender: T
         Supplier identity and document contents are omitted; hashes remain verifiable.
       </div>
       <div className="border-t border-line px-5 py-3 font-mono text-[10px] text-muted">
-        tx {shortHash(award.transactionHash, 14, 8)}
+        local ref {shortHash(award.localReference, 14, 8)}
       </div>
     </div>
   )
