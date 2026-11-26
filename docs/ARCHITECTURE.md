@@ -4,7 +4,7 @@ This document describes how Bidoraq is structured, where state lives, and which 
 
 ## Scope
 
-Bidoraq is a browser-only application. It has no application server, no remote database, and no on-chain write path. The React interface calls deterministic domain functions and stores resulting records in `localStorage`.
+Bidoraq is a browser-only application. It has no application server, no remote database, and no on-chain write path. The React interface calls deterministic domain functions, stores resulting records in `localStorage`, and reads public X Layer chain facts through RPC without signing or broadcasting transactions.
 
 The architecture goal is to keep evidence creation inspectable: every record should be derived from a visible operator action and reproducible from the stored inputs.
 
@@ -17,16 +17,18 @@ flowchart LR
   DOMAIN["Domain layer<br/>hashes, circuit, award, lifecycle, receipts"]
   BROWSER["Browser APIs<br/>crypto.subtle, localStorage, WebCrypto"]
   WALLET["Wallet boundary<br/>EIP-1193 or manual address"]
-  FILES["Local files<br/>hashed but not stored"]
-  EXPORTS["Exports<br/>ledger and receipt JSON"]
+   FILES["Local files<br/>hashed but not stored"]
+   EXPORTS["Exports<br/>ledger and receipt JSON"]
+   RPC["Public X Layer RPCs<br/>chain facts only"]
 
-  UI --> STORE
-  UI --> DOMAIN
-  DOMAIN --> BROWSER
-  STORE --> BROWSER
-  WALLET --> STORE
-  FILES --> UI
-  DOMAIN --> EXPORTS
+   UI --> STORE
+   UI --> DOMAIN
+   DOMAIN --> BROWSER
+   DOMAIN --> RPC
+   STORE --> BROWSER
+   WALLET --> STORE
+   FILES --> UI
+   DOMAIN --> EXPORTS
 ```
 
 ## Component responsibilities
@@ -49,17 +51,17 @@ flowchart LR
 | Tender | id, reference, title, policy, policyHash, bidders, status | Locked procurement brief and rule. |
 | Bid | id, tenderId, bidder, priceKobo, documentHash, salt, commitment, status | Sealed quotation and reveal state. |
 | EligibilityResult | inputs, bits, trace, result, circuitId, processor | Reviewer evidence and six-NAND output. |
-| Award | tenderId, winningBidId, priceKobo, approvedBy, transactionHash | Final decision record. |
+| Award | tenderId, winningBidId, priceKobo, approvedBy, localReference | Final decision record. |
 | AuditLog | actor, role, action, record, timestamp, reference | Trace of local writes. |
-| ReceiptPayload | policy, policyHash, winner, ranked bids, approval metadata | Redacted evidence artifact for verification. |
+| ReceiptPayload | version 2, policy, policyHash, winner, ranked bids, approval metadata, optional onChain verdict | Redacted evidence artifact for verification. |
 
-Workspace versioning is explicit through `version: 2` and `STORAGE_KEY = 'bidoraq:workspace:v2'`.
+Workspace versioning is explicit through `version: 3` and `STORAGE_KEY = 'bidoraq:workspace:v3'`. Version 2 workspaces migrate `transactionHash` to `localReference` on load.
 
 ## Domain functions
 
 | Function | Module | Contract |
 | --- | --- | --- |
-| `computePolicyHash` | `crypto.ts` | Derives the locked policy hash from chain, verifier, tender identity, and policy fields. |
+| `computePolicyHash` | `crypto.ts` | Derives the locked policy hash from chain ID, bytes32 domain tag, tender identity, and policy fields. |
 | `computeCommitment` | `crypto.ts` | Derives a sealed bid commitment from tender, bidder, price, document hash, and salt. |
 | `verifyCommitment` | `crypto.ts` | Recomputes a commitment and compares it to the sealed value. |
 | `hashDocument` | `crypto.ts` | Computes SHA-256 over uploaded file bytes in the browser. |
@@ -68,7 +70,10 @@ Workspace versioning is explicit through `version: 2` and `STORAGE_KEY = 'bidora
 | `selectWinner` | `award.ts` | Ranks eligible revealed bids and identifies the compliant winner. |
 | `canTransition` | `stateMachine.ts` | Determines whether a tender status transition is valid. |
 | `buildReceipt` | `receipt.ts` | Builds a redacted receipt from tender, award, and revealed bids. |
-| `verifyReceipt` | `receipt.ts` | Recomputes policy, winning commitment, and award rule checks. |
+| `verifyReceipt` | `receipt.ts` | Recomputes policy, winning commitment, and award rule checks; requires all reveal fields. |
+| `verifyTapeOut` | `xlayer.ts` | Reads chain ID, block, and processor bytecode from public RPCs with honest failure states. |
+| `evaluateEligibilityOnChain` | `xlayer.ts` | Calls a configured TapeOut processor's `eval(uint256,bytes)` or reports `not-taped-out`. |
+| `verifyReceiptOnChain` | `xlayer.ts` | Reproduces a receipt's eligibility verdict or reports `unavailable` / `not-taped-out`. |
 
 ## Lifecycle invariants
 
@@ -80,6 +85,8 @@ Workspace versioning is explicit through `version: 2` and `STORAGE_KEY = 'bidora
 - An award is valid only when the selected bid equals the computed winner.
 - A receipt must never include supplier names or document contents.
 - Uploaded document bytes must never be persisted.
+- A local reference must never be presented as a blockchain transaction hash.
+- On-chain eligibility must never be implied unless a real configured processor reproduces the bits.
 
 ## Failure handling
 
