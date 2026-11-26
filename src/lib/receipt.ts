@@ -1,6 +1,6 @@
 import { selectWinner } from './award'
 import { computePolicyHash, verifyCommitment } from './crypto'
-import type { Award, Bid, Policy, Tender } from '../types'
+import type { Award, Bid, OnChainVerdict, Policy, Tender } from '../types'
 
 export interface ReceiptBid {
   id: string
@@ -14,17 +14,18 @@ export interface ReceiptBid {
 }
 
 export interface ReceiptPayload {
-  version: 1
+  version: 2
   tenderId: string
   policy: Policy
   policyHash: string
   winningBidId: string
   priceKobo: string
-  transactionHash: string
+  localReference: string
   approvedBy: string
   approvedAt: number
   complianceNote: string
   ranked: ReceiptBid[]
+  eligibilityProof?: OnChainVerdict
 }
 
 export interface RevealedFields {
@@ -57,31 +58,33 @@ export function buildReceipt(tender: Tender, award: Award, bids: Bid[]): Receipt
     }))
 
   return {
-    version: 1,
+    version: 2,
     tenderId: tender.id,
     policy: tender.policy,
     policyHash: tender.policyHash,
     winningBidId: award.winningBidId,
     priceKobo: award.priceKobo,
-    transactionHash: award.transactionHash,
+    localReference: award.localReference,
     approvedBy: award.approvedBy,
     approvedAt: award.approvedAt,
     complianceNote: award.complianceNote,
     ranked,
+    eligibilityProof: winner.eligibility?.onChain,
   }
 }
 
 export function parseReceipt(text: string): ReceiptPayload {
   const parsed = JSON.parse(text) as ReceiptPayload
   if (
-    parsed.version !== 1 ||
+    parsed.version !== 2 ||
     typeof parsed.tenderId !== 'string' ||
     !parsed.policy ||
     typeof parsed.policyHash !== 'string' ||
+    typeof parsed.localReference !== 'string' ||
     typeof parsed.winningBidId !== 'string' ||
     !Array.isArray(parsed.ranked)
   ) {
-    throw new Error('This file is not a Bidoraq version 1 receipt.')
+    throw new Error('This file is not a Bidoraq version 2 receipt.')
   }
   return parsed
 }
@@ -100,13 +103,14 @@ function rankedWinner(receipt: ReceiptPayload): ReceiptBid | null {
 export function verifyReceipt(receipt: ReceiptPayload, revealed: RevealedFields): VerificationCheck[] {
   const policyOk = computePolicyHash(receipt.tenderId, receipt.policy).toLowerCase() === receipt.policyHash.toLowerCase()
   const winningBid = receipt.ranked.find((bid) => bid.id === receipt.winningBidId)
-  const commitmentOk = winningBid
+  const revealedComplete = Boolean(revealed.priceKobo && revealed.documentHash && revealed.salt)
+  const commitmentOk = revealedComplete && winningBid
     ? verifyCommitment(winningBid.commitment, {
         tenderId: receipt.tenderId,
         bidder: winningBid.bidder,
-        priceKobo: revealed.priceKobo || winningBid.priceKobo,
-        documentHash: revealed.documentHash || winningBid.documentHash,
-        salt: revealed.salt || winningBid.salt,
+        priceKobo: revealed.priceKobo,
+        documentHash: revealed.documentHash,
+        salt: revealed.salt,
       })
     : false
   const computed = rankedWinner(receipt)
@@ -123,9 +127,11 @@ export function verifyReceipt(receipt: ReceiptPayload, revealed: RevealedFields)
     {
       label: 'Winning commitment',
       ok: commitmentOk,
-      detail: commitmentOk
-        ? 'The revealed price, document hash and salt reproduce the sealed commitment.'
-        : 'The reveal inputs do not reproduce the winning commitment.',
+      detail: revealedComplete
+        ? commitmentOk
+          ? 'The revealed price, document hash and salt reproduce the sealed commitment.'
+          : 'The reveal inputs do not reproduce the winning commitment.'
+        : 'Supply all three revealed fields before the commitment can be verified.',
     },
     {
       label: 'Award rule',
